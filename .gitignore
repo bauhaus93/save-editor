@@ -1,0 +1,7 @@
+*.exe
+*.gba
+*.sav
+*.zip
+*.ini
+*/__pycache__/*
+*.pyc

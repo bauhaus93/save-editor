@@ -8,8 +8,6 @@ FILE_OUT = "nameless-firered-project-a1.02.sav"
 #FILE_IN = "Pokemon Blattgruen (D) - Kopie.sav"
 #FILE_OUT = "Pokemon Blattgruen (D).sav"
 
-
-
 if __name__ == "__main__":
     setup_logger()
     logger = logging.getLogger()
@@ -20,13 +18,12 @@ if __name__ == "__main__":
 
     savegame = SaveGame(data)
     save = savegame.get_active_save()
-    team = save.read_team()
+    #team = save.read_team()
     #team.max_ivs()
-    save.write_team(team)
+    #save.write_team(team)
     save.set_public_trainer_id(10001)
 
     output = savegame.into_bytes()
-    print(len(data), len(output))
 
     logger.info("Writing savegame: '{}'".format(FILE_OUT))
     with open(FILE_OUT, "wb") as f:

@@ -17,7 +17,7 @@
             "problemMatcher": []
         },
         {
-            "label": "run_emu",
+            "label": "run_emu_linux",
             "type": "shell",
             "command": "wine",
             "args": [
@@ -29,7 +29,12 @@
                 }
             },
             "problemMatcher": []
-            
+        },
+        {
+            "label": "run_emu_windows",
+            "type": "process",
+            "command": "VisualBoyAdvance.exe",
+            "problemMatcher": []
         }
     ]
 }

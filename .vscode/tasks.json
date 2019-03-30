@@ -10,11 +10,26 @@
             "args": [
                 "src/main.py"
             ],
-            "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "run_emu",
+            "type": "shell",
+            "command": "wine",
+            "args": [
+                "VisualBoyAdvance.exe"
+            ],
+            "options": {
+                "env": {
+                    "WINE_PREFIX": "~/.wine_visualboy"
+                }
+            },
+            "problemMatcher": []
+            
         }
     ]
 }

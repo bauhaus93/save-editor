@@ -1,5 +1,8 @@
+import logging
 
 from pokemon import Pokemon
+
+logger = logging.getLogger()
 
 class Team:
 
@@ -10,6 +13,13 @@ class Team:
             pkmn = Pokemon(team_data[offset:offset + 100])
             self.pkmn_list.append(pkmn)
 
+    def get_size(self):
+        return len(self.pkmn_list)
+
+    def max_ivs(self):
+        for pkmn in self.pkmn_list:
+            pkmn.max_ivs()
+
     def __str__(self):
         return "\n".join(str(pkmn) for pkmn in self.pkmn_list)
 
@@ -19,6 +29,6 @@ class Team:
             output += pkmn.into_bytes()
         output += self.trail
         if len(output) != 600:
-            print("Team.into_bytes(): data not of size 600:", len(output))
+            logger.error("Team.into_bytes(): Unexpected result size: expected = {}, was = {}".format(6 * 100, len(output)))
             exit(1)
         return output

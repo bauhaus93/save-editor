@@ -1,4 +1,19 @@
+import logging
 from struct import unpack, pack
+
+from util import hexdump
+
+# thoughts/knowledge on structure in nameless firered
+# (regarding difference to structure of vanilla frlg)
+# "data" field not encrypted
+# checksum not used (always 0)
+# ev block in data field always third block (data+24) 
+
+# offsets relative to data field
+EV_OFFSET = 24  
+IV_OFFSET = 36 + 4
+
+logger = logging.getLogger()
 
 class Pokemon:
 
@@ -11,8 +26,7 @@ class Pokemon:
         self.markings = unpack("<B", pkmn_data[27:28])[0]
         self.checksum = unpack("<H", pkmn_data[28:30])[0]
         self.unknown = unpack("<H", pkmn_data[30:32])[0]
-        encrypted_data = unpack("<48s", pkmn_data[32:80])[0]
-        self.data = crypt_data(encrypted_data, self.ot_id, self.personality)
+        self.data = unpack("<48s", pkmn_data[32:80])[0]
         self.status_condition = unpack("<L", pkmn_data[80:84])[0]
         self.level = unpack("<B", pkmn_data[84:85])[0]
         self.pokerus = unpack("<B", pkmn_data[85:86])[0]
@@ -20,11 +34,32 @@ class Pokemon:
         self.stats = unpack("<5H", pkmn_data[90:])
         
         self.load_evs()
+        self.load_misc()
+        self.write_misc()
+
+    def max_ivs(self):
+        logger.info("Maxing IVs for Pokemon: {} -> {}".format(sum(self.ivs), 31 * 6))
+        for i in range(len(self.ivs)):
+            self.ivs[i] = 31
+        self.write_misc()
     
-    #evs not like in vanilla frlg, must look further
     def load_evs(self):
-        ev_sub_offset = 12 * get_substructure_index(self.personality, 'E')
-        self.evs = unpack("<6B", self.data[ev_sub_offset:ev_sub_offset + 6])
+        self.evs = unpack("<6B", self.data[EV_OFFSET:EV_OFFSET + 6])
+
+    def load_misc(self):
+        value = unpack("<l", self.data[IV_OFFSET:IV_OFFSET + 4])[0]
+        self.ivs = [value >> (5 * i) & 0x1F for i in range(6)]
+        self.egg = (value >> 30) & 1
+        self.ability = (value >> 31) & 1
+
+    def write_evs(self):
+        self.data = self.data[:EV_OFFSET] + pack("<6B", *self.evs) + self.data[EV_OFFSET + 6:]
+
+    def write_misc(self):
+        new_value = (self.egg << 30) | (self.ability << 31)
+        for (i, iv) in enumerate(self.ivs):
+            new_value |= (iv << (5 * i))
+        self.data = self.data[:IV_OFFSET] + pack("<L", new_value) + self.data[IV_OFFSET + 4:]
 
     def __str__(self):
         output = "Pkmn:\n"
@@ -33,8 +68,10 @@ class Pokemon:
         output += "\thp:\t\t{}/{}\n".format(self.curr_hp, self.total_hp)
         output += "\tStats:"
         output += "\tAtt:\t{:3}\n\t\tDef:\t{:3}\n\t\tSpd:\t{:3}\n\t\tSpAtt:\t{:3}\n\t\tSpDef:\t{:3}\n".format(*self.stats)
-        output += "\tEVs:"
-        output += "\tHP:\t{:3}\n\t\tAtt:\t{:3}\n\t\tDef:\t{:3}\n\t\tSpd:\t{:3}\n\t\tSpAtt:\t{:3}\n\t\tSpDef:\t{:3}\n".format(*self.evs)
+        output += "\tIVs:\tTotal:\t{:3}\n".format(sum(self.ivs))
+        output += "\t\tHP:\t{:3}\n\t\tAtt:\t{:3}\n\t\tDef:\t{:3}\n\t\tSpd:\t{:3}\n\t\tSpAtt:\t{:3}\n\t\tSpDef:\t{:3}\n".format(*self.ivs)
+        output += "\tEVs:\tTotal:\t{:3}\n".format(sum(self.evs))
+        output += "\t\tHP:\t{:3}\n\t\tAtt:\t{:3}\n\t\tDef:\t{:3}\n\t\tSpd:\t{:3}\n\t\tSpAtt:\t{:3}\n\t\tSpDef:\t{:3}\n".format(*self.evs)
         output += "\tChecksum:\t0x{:04X}\n".format(self.checksum)
         return output
 
@@ -44,11 +81,11 @@ class Pokemon:
             self.personality, self.ot_id, self.nickname, self.language, self.ot_name,
             self.markings, self.checksum, self.unknown, self.data, self.status_condition, self.level,
             self.pokerus, self.curr_hp, self.total_hp, *self.stats)
-        #todo handle EVs
         if len(output) != 100:
-            print("Pokemon.into_bytes(): data not of size 100:", len(output))
+            logger.error("Pokemon.into_bytes(): Unexpected result size: expected = {}, was = {}".format(100, len(output)))
             exit(1)
         return output
+
 
 def crypt_data(data, ot_id, personality):
     data_decr = bytes()

@@ -21,12 +21,13 @@ if __name__ == "__main__":
     savegame = SaveGame(data)
     save = savegame.get_active_save()
     team = save.read_team()
-    team.max_ivs()
+    #team.max_ivs()
     save.write_team(team)
-    #save.set_public_trainer_id(10001)
+    save.set_public_trainer_id(10001)
 
     output = savegame.into_bytes()
+    print(len(data), len(output))
 
-    logger.info("Writing savegame: '{}'".format(FILE_IN))
+    logger.info("Writing savegame: '{}'".format(FILE_OUT))
     with open(FILE_OUT, "wb") as f:
         f.write(output)

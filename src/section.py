@@ -36,7 +36,7 @@ class Section:
         return self.data[TEAM_PKMN_OFFSET:TEAM_PKMN_OFFSET + TEAM_PKMN_SIZE]
 
     def write_team_size(self, size):
-        self.data = self.data[TEAM_SIZE_OFFSET:] + pack("<L", size) + self.data[TEAM_SIZE_OFFSET + 4:]
+        self.data = self.data[:TEAM_SIZE_OFFSET] + pack("<L", size) + self.data[TEAM_SIZE_OFFSET + 4:]
 
     def write_team(self, team):
         self.write_team_size(team.get_size())
